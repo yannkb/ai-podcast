@@ -1,11 +1,13 @@
 import google.generativeai as genai
+from google.api_core import exceptions as google_exceptions
 import os
 import glob
 from datetime import datetime
 import logging
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import random
+import backoff
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,13 +28,21 @@ model = genai.GenerativeModel(
     system_instruction=config['system_instruction']
 )
 
+# Backoff decorator for handling API errors
+@backoff.on_exception(backoff.expo, 
+                      exception=(google_exceptions.GoogleAPIError, 
+                                 google_exceptions.RetryError),
+                      max_tries=5)
+def generate_content_with_backoff(prompt):
+    return model.generate_content(prompt)
+
 def process_paper(paper_path, output_dir):
     """Process a single paper and generate content."""
     paper_id = os.path.basename(paper_path).replace('.pdf', '')
-    prompt = f"Present the paper with ID {paper_id} for today's podcast episode. Remember to cover all the requested sections in detail."
+    prompt = f"Present the paper with ID {paper_id}. Focus on the main points and keep it concise, aiming for about 150-200 words. Do not welcome the listeners, they have already been greeted at the start of the podcast, instead introduce the topic of the paper. Your introduction must be a transition between each paper presented."
     
     try:
-        response = model.generate_content(prompt)
+        response = generate_content_with_backoff(prompt)
         content = response.text
         
         # Save individual paper content
@@ -42,8 +52,11 @@ def process_paper(paper_path, output_dir):
         
         logging.info(f"Generated content for paper {paper_id}")
         return paper_id, content
+    except google_exceptions.GoogleAPIError as e:
+        logging.error(f"API error processing paper {paper_id}: {str(e)}")
+        return paper_id, None
     except Exception as e:
-        logging.error(f"Error processing paper {paper_id}: {str(e)}")
+        logging.error(f"Unexpected error processing paper {paper_id}: {str(e)}")
         return paper_id, None
 
 def generate_podcast_script(papers_content):
@@ -75,13 +88,12 @@ def main():
     start_time = time.time()
     papers_content = []
     
-    # Process papers concurrently
-    with ThreadPoolExecutor(max_workers=config['max_workers']) as executor:
-        future_to_paper = {executor.submit(process_paper, paper, output_dir): paper for paper in papers}
-        for future in as_completed(future_to_paper):
-            paper_id, content = future.result()
-            if content:
-                papers_content.append((paper_id, content))
+    # Process papers with rate limiting
+    for paper in papers:
+        paper_id, content = process_paper(paper, output_dir)
+        if content:
+            papers_content.append((paper_id, content))
+        time.sleep(random.uniform(1, 3))  # Random delay between requests
     
     # Generate full podcast script
     full_script = generate_podcast_script(papers_content)
