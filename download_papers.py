@@ -1,9 +1,10 @@
-import requests
-import os
-from datetime import datetime
 import concurrent.futures
-import time
 import logging
+import os
+import requests
+import time
+
+from datetime import datetime
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 

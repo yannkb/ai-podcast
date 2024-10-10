@@ -1,13 +1,14 @@
-import google.generativeai as genai
-from google.api_core import exceptions as google_exceptions
-import os
-import glob
-from datetime import datetime
-import logging
-import json
-import time
-import random
 import backoff
+import glob
+import google.generativeai as genai
+import json
+import logging
+import os
+import random
+import time
+
+from datetime import datetime
+from google.api_core import exceptions as google_exceptions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -46,7 +47,7 @@ def process_paper(paper_path, output_dir):
         content = response.text
         
         # Save individual paper content
-        output_file = os.path.join(output_dir, f"{paper_id}_content.md")
+        output_file = os.path.join(output_dir, f"{paper_id}_content.txt")
         with open(output_file, 'w') as f:
             f.write(content)
         
@@ -82,7 +83,7 @@ def main():
         return
     
     # Create nested output directory
-    output_dir = os.path.join("output", current_date)
+    output_dir = os.path.join("scripts", current_date)
     os.makedirs(output_dir, exist_ok=True)
     
     start_time = time.time()
@@ -99,7 +100,7 @@ def main():
     full_script = generate_podcast_script(papers_content)
     
     # Save full podcast script
-    script_file = os.path.join(output_dir, f"podcast_script_{current_date}.md")
+    script_file = os.path.join(output_dir, f"podcast_script_{current_date}.txt")
     with open(script_file, 'w') as f:
         f.write(full_script)
     
