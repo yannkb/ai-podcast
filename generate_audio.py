@@ -1,6 +1,5 @@
 import logging
 import os
-import uuid
 
 from datetime import datetime
 from elevenlabs import VoiceSettings
@@ -32,7 +31,7 @@ def text_to_speech_file(text: str) -> str:
     """
     # Calling the text_to_speech conversion API with detailed parameters
     response = client.text_to_speech.convert(
-        voice_id="pNInz6obpgDQGcFmaJgB",  # Adam pre-made voice
+        voice_id="v3p1kjzUvro6S76qmYmH",  # Mark
         optimize_streaming_latency="0",
         output_format="mp3_22050_32",
         text=text,
