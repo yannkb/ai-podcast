@@ -40,7 +40,7 @@ def generate_content_with_backoff(prompt):
 def process_paper(paper_path, output_dir):
     """Process a single paper and generate content."""
     paper_id = os.path.basename(paper_path).replace('.pdf', '')
-    prompt = f"Present the paper with ID {paper_id}. Focus on the main points and keep it concise, aiming for about 150-200 words. Do not welcome the listeners, they have already been greeted at the start of the podcast, instead introduce the topic of the paper. Your introduction must be a transition between each paper presented."
+    prompt = f"Present the paper with ID {paper_id}. Focus on the main points and keep it concise, aiming for about 150-200 words. Do not welcome the listeners. Directly introduce the topic of the paper. The introduction must feel like a transition between each paper presented. Do not format the text."
     
     try:
         response = generate_content_with_backoff(prompt)
@@ -62,15 +62,13 @@ def process_paper(paper_path, output_dir):
 
 def generate_podcast_script(papers_content):
     """Generate a full podcast script from individual paper contents."""
-    script = "Welcome to today's AI Research Paper Podcast! Let's dive into the latest publications.\n\n"
+    script = f"Welcome to today's {config['podcast_title']}! Let's dive into the latest publications.\n\n"
     
     for paper_id, content in papers_content:
         if content:
-            script += f"--- Paper ID: {paper_id} ---\n\n"
             script += content
-            script += "\n\n--- End of paper presentation ---\n\n"
     
-    script += "That concludes our AI Research Paper Podcast for today. Thank you for listening!"
+    script += f"That concludes our {config['podcast_title']} for today. Thank you for listening!"
     return script
 
 def main():
